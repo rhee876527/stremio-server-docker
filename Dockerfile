@@ -54,37 +54,24 @@ RUN cd && \
   rm -rf "${DIR}"  && \
   apk del --purge .build-dependencies
 
-
 # Main image
 FROM base AS final
 
-RUN apk add --no-cache curl
-# Get the latest Stremio server version. The version from server-url.txt can be behind. As of Oct 6, 24 it was showing version v4.20.8 while v4.20.9 was available.
+RUN apk add --no-cache curl jq
+# Fetch the latest version tag from Docker Hub
 RUN set -eux; \
-    # Get the current version from server-url.txt
-    CURRENT_VERSION=$(curl -s https://raw.githubusercontent.com/Stremio/stremio-shell/master/server-url.txt | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+'); \
-    echo "Current version: ${CURRENT_VERSION}"; \
-    # Increment the version
-    NEXT_VERSION=$(echo "${CURRENT_VERSION}" | awk -F. -v OFS=. '{$NF++; print}'); \
-    echo "Next version: ${NEXT_VERSION}"; \
-    # Check if the next version URL is available
-    if curl --output /dev/null --silent --fail "https://dl.strem.io/server/${NEXT_VERSION}/desktop/server.js"; then \
-        echo "Using next version: ${NEXT_VERSION}"; \
-        VERSION=${NEXT_VERSION}; \
-    else \
-        echo "Next version not available. Using current version: ${CURRENT_VERSION}"; \
-        VERSION=${CURRENT_VERSION}; \
-    fi; \
+    VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/stremio/server/tags/" | jq -r '.results[].name' | grep -v 'latest' | sort -V | tail -n 1); \
+    echo "Using version: ${VERSION}"; \
     # Download the selected server.js file
     curl -fLO "https://dl.strem.io/server/${VERSION}/desktop/server.js"
 
 # Copy server.js 
-COPY . .
+COPY server.js .
 
 # Custom ENV options
 ENV FFMPEG_BIN=
 ENV FFPROBE_BIN=
-ENV NODE_ENV=production
+#ENV NODE_ENV=production
 ENV APP_PATH=
 ENV NO_CORS=
 #disable casting for server
