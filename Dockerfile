@@ -66,7 +66,7 @@ RUN set -eux; \
     curl -fLO "https://dl.strem.io/server/${VERSION}/desktop/server.js"
 
 # Copy server.js 
-COPY server.js .
+COPY . .
 
 # Custom ENV options
 ENV FFMPEG_BIN=
