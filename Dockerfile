@@ -1,5 +1,5 @@
 # Base image
-FROM node:20-alpine3.20 AS base
+FROM node:20-alpine3.21 AS base
 
 RUN apk update && apk upgrade
 
@@ -59,8 +59,7 @@ FROM base AS final
 
 RUN apk add --no-cache curl jq
 # Fetch the latest version tag from Docker Hub
-RUN set -eux; \
-    VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/stremio/server/tags/" | jq -r '.results[].name' | grep -v 'latest' | sort -V | tail -n 1); \
+RUN VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/stremio/server/tags/" | jq -r '.results[].name' | grep -v 'latest' | sort -V | tail -n 1); \
     echo "Using version: ${VERSION}"; \
     # Download the selected server.js file
     curl -fLO "https://dl.strem.io/server/${VERSION}/desktop/server.js"
@@ -71,11 +70,10 @@ COPY . .
 # Custom ENV options
 ENV FFMPEG_BIN=
 ENV FFPROBE_BIN=
-#ENV NODE_ENV=production
+ENV NODE_ENV=production
 ENV APP_PATH=
 ENV NO_CORS=
-#disable casting for server
-ENV CASTING_DISABLED=1
+ENV CASTING_DISABLED=
 
 # Copy ffmpeg
 COPY --from=ffmpeg /usr/bin/ffmpeg /usr/bin/ffprobe /usr/bin/
@@ -86,7 +84,7 @@ RUN apk add --no-cache libwebp libvorbis x265-libs x264-libs libass opus libgmpx
 
 # Add arch specific libs
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
-        apk add --no-cache intel-media-driver; \
+        apk add --no-cache intel-media-driver mesa-va-gallium; \
     fi
 
 # Clear cache
