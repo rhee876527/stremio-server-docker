@@ -36,9 +36,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}
           platforms: linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+  
   workflow-keepalive:
       if: github.event_name == 'schedule'
       runs-on: ubuntu-latest
